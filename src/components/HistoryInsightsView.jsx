@@ -53,7 +53,7 @@ function getSuggestedWorkingWeight(exerciseName, bodyweight, isCompound) {
 }
 
 export default function HistoryInsightsView() {
-  const { state, deleteSession, deleteBodyweightEntry } = useAppState();
+  const { state, deleteBodyweightEntry } = useAppState();
   const [activeTab, setActiveTab] = useState('exercises'); // 'exercises' | 'bodyweight' | 'cardio'
   const unit = state.userProfile?.unit || 'kg';
   const currentWeight = Number(state.userProfile?.currentWeight) || 0;
@@ -222,7 +222,7 @@ export default function HistoryInsightsView() {
   return (
     <div className="space-y-4 px-4 pt-5 pb-8">
       <header>
-        <h1 className="text-2xl font-black text-slate-50">History &amp; Insights</h1>
+        <h1 className="text-2xl font-black text-slate-50">Insights</h1>
         <p className="mt-0.5 text-xs text-slate-400">
           Analytics, progression trends &amp; bodyweight targets
         </p>

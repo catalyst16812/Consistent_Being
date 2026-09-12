@@ -384,14 +384,6 @@ export function AppStateProvider({ children }) {
     }));
   }, []);
 
-  /** Delete an accidental or duplicate workout session from history */
-  const deleteSession = useCallback((sessionId) => {
-    setState((s) => ({
-      ...s,
-      workoutHistory: s.workoutHistory.filter((sess) => sess.sessionId !== sessionId),
-      cardioHistory: s.cardioHistory.filter((c) => c.sessionId !== sessionId),
-    }));
-  }, []);
 
   /** Replace the whole state (import / demo). */
   const replaceState = useCallback((next) => {
@@ -425,7 +417,6 @@ export function AppStateProvider({ children }) {
     clearDraft,
     addCardioSession,
     commitSession,
-    deleteSession,
     replaceState,
     resetAll,
     loadDemo,

@@ -6,7 +6,7 @@ import { getGhost } from '../utils/ghost.js';
 import DayCard from './DayCard.jsx';
 
 export default function WorkoutListView() {
-  const { state, activeSplit, deleteSession, clearDraft } = useAppState();
+  const { state, activeSplit, clearDraft } = useAppState();
   const navigate = useNavigate();
   const today = todayISO();
   const unit = state.userProfile?.unit || 'kg';
@@ -15,16 +15,6 @@ export default function WorkoutListView() {
   const sortedHistory = [...state.workoutHistory].sort((a, b) =>
     b.date.localeCompare(a.date) || b.sessionId.localeCompare(a.sessionId)
   );
-
-  const handleDelete = (session) => {
-    if (
-      window.confirm(
-        `Delete the session for ${session.splitDay} on ${session.date}? This cannot be undone.`
-      )
-    ) {
-      deleteSession(session.sessionId);
-    }
-  };
 
   return (
     <div className="space-y-5 px-4 pt-5 pb-8">
@@ -146,25 +136,15 @@ export default function WorkoutListView() {
                       </p>
                     </div>
 
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setExpandedSession(isExpanded ? null : session.sessionId)
-                        }
-                        className="rounded-lg bg-slate-800 px-2 py-1 text-[11px] font-bold text-slate-300"
-                      >
-                        {isExpanded ? 'Hide' : 'Details'}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(session)}
-                        className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-2 py-1 text-[11px] font-bold text-rose-300 hover:bg-rose-500/20"
-                        aria-label="Delete session"
-                      >
-                        Delete
-                      </button>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setExpandedSession(isExpanded ? null : session.sessionId)
+                      }
+                      className="rounded-lg bg-slate-800 px-2.5 py-1 text-[11px] font-bold text-slate-300 hover:bg-slate-700"
+                    >
+                      {isExpanded ? 'Hide' : 'Details'}
+                    </button>
                   </div>
 
                   {/* Expanded Session Breakdown */}

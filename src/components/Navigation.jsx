@@ -68,7 +68,7 @@ function GearIcon({ className }) {
 const TABS = [
   { to: '/', end: true, label: 'Dashboard', icon: HomeIcon },
   { to: '/workouts', end: false, label: 'Workouts', icon: DumbbellIcon },
-  { to: '/history', end: false, label: 'History', icon: HistoryChartIcon },
+  { to: '/insights', end: false, label: 'Insights', icon: HistoryChartIcon },
   { to: '/settings', end: false, label: 'Settings', icon: GearIcon },
 ];
 

@@ -16,6 +16,7 @@ export default function App() {
           <Route path="/" element={<DashboardView />} />
           <Route path="/workouts" element={<WorkoutListView />} />
           <Route path="/workout/:splitKey" element={<ActiveWorkoutView />} />
+          <Route path="/insights" element={<HistoryInsightsView />} />
           <Route path="/history" element={<HistoryInsightsView />} />
           <Route path="/settings" element={<SettingsView />} />
           <Route path="*" element={<DashboardView />} />
