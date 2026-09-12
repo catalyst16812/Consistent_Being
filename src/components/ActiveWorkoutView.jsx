@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAppState } from '../context/AppStateContext.jsx';
-import { SPLIT_DAYS } from '../data/exercises.js';
 import { formatLong } from '../utils/dates.js';
 import { getGhost } from '../utils/ghost.js';
 import ExerciseRow from './ExerciseRow.jsx';
@@ -11,13 +10,15 @@ import AddExerciseModal from './AddExerciseModal.jsx';
 import CardioLogger from './CardioLogger.jsx';
 
 export default function ActiveWorkoutView() {
-  const { state, startDraft, updateDraft, clearDraft, commitSession } =
+  const { state, activeSplit, startDraft, updateDraft, clearDraft, commitSession } =
     useAppState();
   const { splitKey } = useParams();
   const navigate = useNavigate();
-  const split = SPLIT_DAYS.find((s) => s.key === splitKey) || SPLIT_DAYS[0];
   const draft = state.activeDraft;
   const unit = state.userProfile?.unit || 'kg';
+
+  // Target split day definition for current route
+  const currentSplitDay = activeSplit?.find((s) => s.key === splitKey) || activeSplit?.[0];
 
   const [swapIndex, setSwapIndex] = useState(null);
   const [addExerciseOpen, setAddExerciseOpen] = useState(false);
@@ -25,10 +26,17 @@ export default function ActiveWorkoutView() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const firstRender = useRef(true);
 
-  // No in-progress session for this day? Start one from the template.
+  // If no in-progress session exists, start one from the template
   useEffect(() => {
-    if (!state.activeDraft) startDraft(split.key);
-  }, [state.activeDraft, split.key, startDraft]);
+    if (!currentSplitDay) return;
+    if (!state.activeDraft) {
+      if (splitKey !== currentSplitDay.key) {
+        navigate(`/workout/${currentSplitDay.key}`, { replace: true });
+      } else {
+        startDraft(currentSplitDay.key);
+      }
+    }
+  }, [state.activeDraft, currentSplitDay, splitKey, navigate, startDraft]);
 
   // Flash a subtle "Saved" indicator whenever inputs auto-save.
   useEffect(() => {
@@ -43,11 +51,11 @@ export default function ActiveWorkoutView() {
   }, [draft]);
 
   // A different split day is already in progress → don't lose it silently.
-  if (draft && draft.splitKey !== split.key) {
+  if (draft && draft.splitKey !== splitKey) {
     return (
       <div className="px-4 pt-5">
         <h1 className="text-2xl font-black text-slate-50">
-          {SPLIT_DAYS.find((s) => s.key === draft.splitKey)?.label || draft.splitDay}
+          {draft.splitDay}
         </h1>
         <div className="mt-4 rounded-2xl border border-amber-400/40 bg-amber-400/10 p-4">
           <p className="text-sm font-bold text-amber-200">
@@ -67,7 +75,10 @@ export default function ActiveWorkoutView() {
             <button
               type="button"
               onClick={() => {
-                if (window.confirm('Discard the in-progress session?')) clearDraft();
+                if (window.confirm('Discard the in-progress session?')) {
+                  const targetKey = currentSplitDay?.key || splitKey;
+                  startDraft(targetKey, true);
+                }
               }}
               className="flex-1 rounded-xl border border-slate-600 py-2.5 text-sm font-bold text-slate-300 active:bg-slate-800"
             >

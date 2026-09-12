@@ -6,7 +6,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { SPLIT_DAYS, CORE_LIFTS, PRESET_SPLITS } from '../data/exercises.js';
+import { CORE_LIFTS, PRESET_SPLITS } from '../data/exercises.js';
 import { todayISO, isoWeekKey, addDaysISO } from '../utils/dates.js';
 import {
   levelFromXp,
@@ -201,13 +201,28 @@ export function AppStateProvider({ children }) {
   }, []);
 
   /** Create a new in-progress session from the split template. */
-  const startDraft = useCallback((splitKey) => {
-    const s = stateRef.current;
-    if (s.activeDraft) return;
-    const splitDays = getActiveSplit(s.userProfile);
-    const split = splitDays.find((d) => d.key === splitKey) || splitDays[0];
-    if (!split) return;
-    setState({ ...s, activeDraft: buildDraft(split, todayISO()) });
+  const startDraft = useCallback((splitKey, force = false) => {
+    setState((s) => {
+      if (s.activeDraft && !force) return s;
+      const splitDays = getActiveSplit(s.userProfile);
+      let split = splitDays.find((d) => d.key === splitKey);
+      if (!split) {
+        // Fallback: search across all preset splits in case splitKey was from another routine
+        for (const p of Object.values(PRESET_SPLITS)) {
+          const match = p.days?.find((d) => d.key === splitKey);
+          if (match) {
+            split = match;
+            break;
+          }
+        }
+      }
+      if (!split) split = splitDays[0];
+      if (!split) return s;
+      return {
+        ...s,
+        activeDraft: buildDraft(split, todayISO()),
+      };
+    });
   }, []);
 
   /** Patch the in-progress session (pure functional update → safe to batch). */

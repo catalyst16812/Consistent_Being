@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppState } from '../context/AppStateContext.jsx';
-import { SPLIT_DAYS } from '../data/exercises.js';
 import { todayISO, formatLong } from '../utils/dates.js';
 import { getGhost } from '../utils/ghost.js';
 import DayCard from './DayCard.jsx';
 
 export default function WorkoutListView() {
-  const { state, activeSplit, deleteSession } = useAppState();
+  const { state, activeSplit, deleteSession, clearDraft } = useAppState();
   const navigate = useNavigate();
   const today = todayISO();
   const unit = state.userProfile?.unit || 'kg';
@@ -35,6 +34,45 @@ export default function WorkoutListView() {
           {formatLong(today)} — select a workout day
         </p>
       </header>
+
+      {/* In-Progress Session Notification Banner */}
+      {state.activeDraft && (
+        <div className="rounded-2xl border border-amber-400/40 bg-amber-400/10 p-3.5">
+          <div className="flex items-center justify-between gap-2">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-wider text-amber-300">
+                In-Progress Session
+              </p>
+              <p className="text-sm font-bold text-slate-100">
+                {state.activeDraft.splitDay}
+              </p>
+              <p className="text-[11px] text-amber-200/70">
+                {formatLong(state.activeDraft.date)}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => navigate(`/workout/${state.activeDraft.splitKey}`)}
+                className="rounded-xl bg-amber-400 px-3 py-1.5 text-xs font-bold text-slate-950 active:scale-95"
+              >
+                Resume
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (window.confirm('Discard the in-progress session?')) {
+                    clearDraft();
+                  }
+                }}
+                className="rounded-xl border border-slate-700 bg-slate-800/80 px-3 py-1.5 text-xs font-semibold text-slate-300 hover:bg-slate-700 active:scale-95"
+              >
+                Discard
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="space-y-3">
         {activeSplit.map((split) => {
