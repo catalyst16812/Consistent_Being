@@ -230,6 +230,14 @@ export default function ActiveWorkoutView() {
                 ),
               }))
             }
+            onRemoveExercise={() => {
+              if (window.confirm(`Remove "${ex.name}" from today's workout?`)) {
+                updateDraft((d) => ({
+                  ...d,
+                  exercises: d.exercises.filter((_, j) => j !== i),
+                }));
+              }
+            }}
             onSwap={() => setSwapIndex(i)}
           />
         ))}

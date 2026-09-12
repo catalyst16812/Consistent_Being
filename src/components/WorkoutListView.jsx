@@ -7,7 +7,7 @@ import { getGhost } from '../utils/ghost.js';
 import DayCard from './DayCard.jsx';
 
 export default function WorkoutListView() {
-  const { state, deleteSession } = useAppState();
+  const { state, activeSplit, deleteSession } = useAppState();
   const navigate = useNavigate();
   const today = todayISO();
   const unit = state.userProfile?.unit || 'kg';
@@ -30,16 +30,16 @@ export default function WorkoutListView() {
   return (
     <div className="space-y-5 px-4 pt-5 pb-8">
       <header>
-        <h1 className="text-2xl font-black text-slate-50">5-Day Split</h1>
+        <h1 className="text-2xl font-black text-slate-50">{activeSplit.length}-Day Split</h1>
         <p className="mt-0.5 text-xs text-slate-400">
           {formatLong(today)} — select a workout day
         </p>
       </header>
 
       <div className="space-y-3">
-        {SPLIT_DAYS.map((split) => {
+        {activeSplit.map((split) => {
           const firstExercise = split.exercises[0];
-          const ghost = getGhost(firstExercise.name, state.workoutHistory);
+          const ghost = firstExercise ? getGhost(firstExercise.name, state.workoutHistory) : null;
           const loggedToday = state.workoutHistory.some(
             (s) => s.date === today && s.splitDay === split.label
           );

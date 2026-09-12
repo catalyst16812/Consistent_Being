@@ -856,74 +856,350 @@ export const EXERCISE_DATABASE = [
   }
 ];
 
-// Split template definitions
-export const SPLIT_DAYS = [
-  {
-    key: 'push',
-    day: 1,
-    label: 'Day 1 - Push',
-    short: 'Push',
-    focus: 'Chest · Shoulders · Triceps',
-    exercises: [
-      { name: 'Flat Barbell Bench Press', targetReps: '6-8', sets: 4 },
-      { name: 'Machine Shoulder Press', targetReps: '8-10', sets: 3 },
-      { name: 'Incline Dumbbell Press', targetReps: '8-12', sets: 3 },
-      { name: 'Cable Triceps Pushdown', targetReps: '10-12', sets: 3 },
+// Popular Preset Training Splits
+export const PRESET_SPLITS = {
+  'preset-pplul': {
+    id: 'preset-pplul',
+    name: '5-Day Push / Pull / Legs / Upper / Lower',
+    short: '5-Day PPLUL',
+    daysCount: 5,
+    description: 'High-frequency balanced split for hypertrophy and progressive overload.',
+    days: [
+      {
+        key: 'push',
+        day: 1,
+        label: 'Day 1 - Push',
+        short: 'Push',
+        focus: 'Chest · Shoulders · Triceps',
+        exercises: [
+          { name: 'Flat Barbell Bench Press', targetReps: '6-8', sets: 4 },
+          { name: 'Machine Shoulder Press', targetReps: '8-10', sets: 3 },
+          { name: 'Incline Dumbbell Press', targetReps: '8-12', sets: 3 },
+          { name: 'Cable Triceps Pushdown', targetReps: '10-12', sets: 3 },
+        ],
+      },
+      {
+        key: 'pull',
+        day: 2,
+        label: 'Day 2 - Pull',
+        short: 'Pull',
+        focus: 'Back · Biceps',
+        exercises: [
+          { name: 'Barbell Bent-Over Row', targetReps: '6-10', sets: 4 },
+          { name: 'Lat Pulldown', targetReps: '8-12', sets: 3 },
+          { name: 'Face Pull', targetReps: '12-15', sets: 3 },
+          { name: 'Barbell Curl', targetReps: '10-12', sets: 3 },
+        ],
+      },
+      {
+        key: 'legs',
+        day: 3,
+        label: 'Day 3 - Legs',
+        short: 'Legs',
+        focus: 'Quads · Hamstrings · Calves',
+        exercises: [
+          { name: 'Barbell Squat', targetReps: '5-8', sets: 4 },
+          { name: 'Leg Press', targetReps: '10-12', sets: 3 },
+          { name: 'Romanian Deadlift', targetReps: '8-10', sets: 3 },
+          { name: 'Standing Calf Raise', targetReps: '12-15', sets: 3 },
+        ],
+      },
+      {
+        key: 'upper',
+        day: 4,
+        label: 'Day 4 - Upper',
+        short: 'Upper',
+        focus: 'Full upper body',
+        exercises: [
+          { name: 'Overhead Press', targetReps: '6-10', sets: 4 },
+          { name: 'Seated Cable Row', targetReps: '8-12', sets: 3 },
+          { name: 'Dumbbell Lateral Raise', targetReps: '12-15', sets: 3 },
+          { name: 'Hammer Curl', targetReps: '10-12', sets: 3 },
+        ],
+      },
+      {
+        key: 'lower',
+        day: 5,
+        label: 'Day 5 - Lower',
+        short: 'Lower',
+        focus: 'Posterior chain · Calves',
+        exercises: [
+          { name: 'Barbell Deadlift', targetReps: '4-6', sets: 3 },
+          { name: 'Front Squat', targetReps: '6-10', sets: 3 },
+          { name: 'Lying Leg Curl', targetReps: '10-15', sets: 3 },
+          { name: 'Seated Calf Raise', targetReps: '12-15', sets: 3 },
+        ],
+      },
     ],
   },
-  {
-    key: 'pull',
-    day: 2,
-    label: 'Day 2 - Pull',
-    short: 'Pull',
-    focus: 'Back · Biceps',
-    exercises: [
-      { name: 'Barbell Bent-Over Row', targetReps: '6-10', sets: 4 },
-      { name: 'Lat Pulldown', targetReps: '8-12', sets: 3 },
-      { name: 'Face Pull', targetReps: '12-15', sets: 3 },
-      { name: 'Barbell Curl', targetReps: '10-12', sets: 3 },
+  'preset-upper-lower': {
+    id: 'preset-upper-lower',
+    name: '4-Day Upper / Lower Split',
+    short: '4-Day Upper/Lower',
+    daysCount: 4,
+    description: '2 Upper and 2 Lower sessions per week. Ideal balance of recovery and frequency.',
+    days: [
+      {
+        key: 'upper-a',
+        day: 1,
+        label: 'Day 1 - Upper A',
+        short: 'Upper A',
+        focus: 'Chest · Back · Shoulders',
+        exercises: [
+          { name: 'Flat Barbell Bench Press', targetReps: '6-8', sets: 4 },
+          { name: 'Barbell Bent-Over Row', targetReps: '6-10', sets: 4 },
+          { name: 'Overhead Press', targetReps: '8-10', sets: 3 },
+          { name: 'Lat Pulldown', targetReps: '8-12', sets: 3 },
+          { name: 'Cable Triceps Pushdown', targetReps: '10-12', sets: 3 },
+        ],
+      },
+      {
+        key: 'lower-a',
+        day: 2,
+        label: 'Day 2 - Lower A',
+        short: 'Lower A',
+        focus: 'Quads · Hamstrings · Calves',
+        exercises: [
+          { name: 'Barbell Squat', targetReps: '5-8', sets: 4 },
+          { name: 'Romanian Deadlift', targetReps: '8-10', sets: 3 },
+          { name: 'Leg Press', targetReps: '10-12', sets: 3 },
+          { name: 'Standing Calf Raise', targetReps: '12-15', sets: 3 },
+        ],
+      },
+      {
+        key: 'upper-b',
+        day: 3,
+        label: 'Day 3 - Upper B',
+        short: 'Upper B',
+        focus: 'Incline Press · Rows · Arms',
+        exercises: [
+          { name: 'Incline Dumbbell Press', targetReps: '8-12', sets: 4 },
+          { name: 'Seated Cable Row', targetReps: '8-12', sets: 3 },
+          { name: 'Dumbbell Lateral Raise', targetReps: '12-15', sets: 3 },
+          { name: 'Barbell Curl', targetReps: '10-12', sets: 3 },
+          { name: 'Face Pull', targetReps: '12-15', sets: 3 },
+        ],
+      },
+      {
+        key: 'lower-b',
+        day: 4,
+        label: 'Day 4 - Lower B',
+        short: 'Lower B',
+        focus: 'Deadlift · Front Squat · Posterior Chain',
+        exercises: [
+          { name: 'Barbell Deadlift', targetReps: '4-6', sets: 3 },
+          { name: 'Front Squat', targetReps: '6-10', sets: 3 },
+          { name: 'Lying Leg Curl', targetReps: '10-15', sets: 3 },
+          { name: 'Seated Calf Raise', targetReps: '12-15', sets: 3 },
+        ],
+      },
     ],
   },
-  {
-    key: 'legs',
-    day: 3,
-    label: 'Day 3 - Legs',
-    short: 'Legs',
-    focus: 'Quads · Hamstrings · Calves',
-    exercises: [
-      { name: 'Barbell Squat', targetReps: '5-8', sets: 4 },
-      { name: 'Leg Press', targetReps: '10-12', sets: 3 },
-      { name: 'Romanian Deadlift', targetReps: '8-10', sets: 3 },
-      { name: 'Standing Calf Raise', targetReps: '12-15', sets: 3 },
+  'preset-full-body': {
+    id: 'preset-full-body',
+    name: '3-Day Full Body Routine',
+    short: '3-Day Full Body',
+    daysCount: 3,
+    description: '3 high-efficiency sessions per week hitting every muscle group with ample recovery.',
+    days: [
+      {
+        key: 'full-a',
+        day: 1,
+        label: 'Day 1 - Full Body A',
+        short: 'Full Body A',
+        focus: 'Squat · Bench · Row',
+        exercises: [
+          { name: 'Barbell Squat', targetReps: '5-8', sets: 4 },
+          { name: 'Flat Barbell Bench Press', targetReps: '6-8', sets: 4 },
+          { name: 'Barbell Bent-Over Row', targetReps: '6-10', sets: 4 },
+          { name: 'Cable Triceps Pushdown', targetReps: '10-12', sets: 3 },
+        ],
+      },
+      {
+        key: 'full-b',
+        day: 2,
+        label: 'Day 2 - Full Body B',
+        short: 'Full Body B',
+        focus: 'Deadlift · Overhead Press · Lats',
+        exercises: [
+          { name: 'Barbell Deadlift', targetReps: '4-6', sets: 3 },
+          { name: 'Overhead Press', targetReps: '6-8', sets: 4 },
+          { name: 'Lat Pulldown', targetReps: '8-12', sets: 3 },
+          { name: 'Barbell Curl', targetReps: '10-12', sets: 3 },
+        ],
+      },
+      {
+        key: 'full-c',
+        day: 3,
+        label: 'Day 3 - Full Body C',
+        short: 'Full Body C',
+        focus: 'Leg Press · Incline DB · Cable Row',
+        exercises: [
+          { name: 'Leg Press', targetReps: '10-12', sets: 3 },
+          { name: 'Incline Dumbbell Press', targetReps: '8-12', sets: 3 },
+          { name: 'Seated Cable Row', targetReps: '8-12', sets: 3 },
+          { name: 'Dumbbell Lateral Raise', targetReps: '12-15', sets: 3 },
+          { name: 'Standing Calf Raise', targetReps: '12-15', sets: 3 },
+        ],
+      },
     ],
   },
-  {
-    key: 'upper',
-    day: 4,
-    label: 'Day 4 - Upper',
-    short: 'Upper',
-    focus: 'Full upper body',
-    exercises: [
-      { name: 'Overhead Press', targetReps: '6-10', sets: 4 },
-      { name: 'Seated Cable Row', targetReps: '8-12', sets: 3 },
-      { name: 'Dumbbell Lateral Raise', targetReps: '12-15', sets: 3 },
-      { name: 'Hammer Curl', targetReps: '10-12', sets: 3 },
+  'preset-ppl-3': {
+    id: 'preset-ppl-3',
+    name: '3-Day Push / Pull / Legs',
+    short: '3-Day PPL',
+    daysCount: 3,
+    description: 'Classic 3-day body-part split focusing on movement planes.',
+    days: [
+      {
+        key: 'ppl-push',
+        day: 1,
+        label: 'Day 1 - Push',
+        short: 'Push',
+        focus: 'Chest · Shoulders · Triceps',
+        exercises: [
+          { name: 'Flat Barbell Bench Press', targetReps: '6-8', sets: 4 },
+          { name: 'Machine Shoulder Press', targetReps: '8-10', sets: 3 },
+          { name: 'Incline Dumbbell Press', targetReps: '8-12', sets: 3 },
+          { name: 'Cable Triceps Pushdown', targetReps: '10-12', sets: 3 },
+        ],
+      },
+      {
+        key: 'ppl-pull',
+        day: 2,
+        label: 'Day 2 - Pull',
+        short: 'Pull',
+        focus: 'Back · Rear Delts · Biceps',
+        exercises: [
+          { name: 'Barbell Bent-Over Row', targetReps: '6-10', sets: 4 },
+          { name: 'Lat Pulldown', targetReps: '8-12', sets: 3 },
+          { name: 'Face Pull', targetReps: '12-15', sets: 3 },
+          { name: 'Barbell Curl', targetReps: '10-12', sets: 3 },
+        ],
+      },
+      {
+        key: 'ppl-legs',
+        day: 3,
+        label: 'Day 3 - Legs',
+        short: 'Legs',
+        focus: 'Quads · Hamstrings · Calves',
+        exercises: [
+          { name: 'Barbell Squat', targetReps: '5-8', sets: 4 },
+          { name: 'Romanian Deadlift', targetReps: '8-10', sets: 3 },
+          { name: 'Leg Press', targetReps: '10-12', sets: 3 },
+          { name: 'Standing Calf Raise', targetReps: '12-15', sets: 3 },
+        ],
+      },
     ],
   },
-  {
-    key: 'lower',
-    day: 5,
-    label: 'Day 5 - Lower',
-    short: 'Lower',
-    focus: 'Posterior chain · Calves',
-    exercises: [
-      { name: 'Barbell Deadlift', targetReps: '4-6', sets: 3 },
-      { name: 'Front Squat', targetReps: '6-10', sets: 3 },
-      { name: 'Lying Leg Curl', targetReps: '10-15', sets: 3 },
-      { name: 'Seated Calf Raise', targetReps: '12-15', sets: 3 },
+  'preset-ppl-6': {
+    id: 'preset-ppl-6',
+    name: '6-Day Push / Pull / Legs (2x/Week)',
+    short: '6-Day PPL',
+    daysCount: 6,
+    description: 'High-volume bodybuilding split hitting every muscle group twice every 7 days.',
+    days: [
+      {
+        key: 'ppl-6-push1',
+        day: 1,
+        label: 'Day 1 - Push 1',
+        short: 'Push 1',
+        focus: 'Heavy Bench · Delts · Triceps',
+        exercises: [
+          { name: 'Flat Barbell Bench Press', targetReps: '5-8', sets: 4 },
+          { name: 'Overhead Press', targetReps: '6-8', sets: 3 },
+          { name: 'Incline Dumbbell Press', targetReps: '8-12', sets: 3 },
+          { name: 'Cable Triceps Pushdown', targetReps: '10-12', sets: 3 },
+        ],
+      },
+      {
+        key: 'ppl-6-pull1',
+        day: 2,
+        label: 'Day 2 - Pull 1',
+        short: 'Pull 1',
+        focus: 'Heavy Deadlift · Rows · Biceps',
+        exercises: [
+          { name: 'Barbell Deadlift', targetReps: '4-6', sets: 3 },
+          { name: 'Barbell Bent-Over Row', targetReps: '6-10', sets: 4 },
+          { name: 'Lat Pulldown', targetReps: '8-12', sets: 3 },
+          { name: 'Barbell Curl', targetReps: '10-12', sets: 3 },
+        ],
+      },
+      {
+        key: 'ppl-6-legs1',
+        day: 3,
+        label: 'Day 3 - Legs 1',
+        short: 'Legs 1',
+        focus: 'Heavy Squat · Quads · Calves',
+        exercises: [
+          { name: 'Barbell Squat', targetReps: '5-8', sets: 4 },
+          { name: 'Leg Press', targetReps: '10-12', sets: 3 },
+          { name: 'Romanian Deadlift', targetReps: '8-10', sets: 3 },
+          { name: 'Standing Calf Raise', targetReps: '12-15', sets: 3 },
+        ],
+      },
+      {
+        key: 'ppl-6-push2',
+        day: 4,
+        label: 'Day 4 - Push 2',
+        short: 'Push 2',
+        focus: 'Incline Barbell · Shoulders · Flyes',
+        exercises: [
+          { name: 'Incline Barbell Bench Press', targetReps: '6-8', sets: 4 },
+          { name: 'Machine Shoulder Press', targetReps: '8-10', sets: 3 },
+          { name: 'Dumbbell Lateral Raise', targetReps: '12-15', sets: 3 },
+          { name: 'Dips (Chest Focus)', targetReps: '8-12', sets: 3 },
+        ],
+      },
+      {
+        key: 'ppl-6-pull2',
+        day: 5,
+        label: 'Day 5 - Pull 2',
+        short: 'Pull 2',
+        focus: 'Pull-Ups · Cable Rows · Rear Delts',
+        exercises: [
+          { name: 'Pull-Up', targetReps: '6-10', sets: 4 },
+          { name: 'Seated Cable Row', targetReps: '8-12', sets: 3 },
+          { name: 'Face Pull', targetReps: '12-15', sets: 3 },
+          { name: 'Hammer Curl', targetReps: '10-12', sets: 3 },
+        ],
+      },
+      {
+        key: 'ppl-6-legs2',
+        day: 6,
+        label: 'Day 6 - Legs 2',
+        short: 'Legs 2',
+        focus: 'Front Squat · Hamstrings · Calves',
+        exercises: [
+          { name: 'Front Squat', targetReps: '6-10', sets: 4 },
+          { name: 'Dumbbell Romanian Deadlift', targetReps: '8-12', sets: 3 },
+          { name: 'Lying Leg Curl', targetReps: '10-15', sets: 3 },
+          { name: 'Seated Calf Raise', targetReps: '12-15', sets: 3 },
+        ],
+      },
     ],
   },
-];
+};
+
+// Default export of the default split (backward compatibility)
+export const SPLIT_DAYS = PRESET_SPLITS['preset-pplul'].days;
+
+// Emoji badges for equipment and movement types
+export function getEquipmentEmoji(equipment) {
+  switch ((equipment || '').toLowerCase()) {
+    case 'barbell': return '🏋️';
+    case 'dumbbell': return '🥊';
+    case 'machine': return '⚙️';
+    case 'cable': return '⛓️';
+    case 'bodyweight': return '🤸';
+    case 'kettlebell': return '🫖';
+    default: return '🔧';
+  }
+}
+
+export function getTypeEmoji(type) {
+  return (type || '').toLowerCase() === 'compound' ? '🛠️' : '🔧';
+}
 
 // Core compound movements tracked on the strength trajectory chart
 // and eligible for the "+20 XP · upper rep limit" bonus.

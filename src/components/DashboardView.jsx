@@ -25,7 +25,8 @@ function Stat({ label, value, sub }) {
 }
 
 export default function DashboardView() {
-  const { state, addCardioSession } = useAppState();
+  const { state, addCardioSession, activeSplit } = useAppState();
+  const splitTargetDays = activeSplit?.length || 5;
   const today = todayISO();
   const unit = state.userProfile?.unit || 'kg';
   const goal = state.userProfile?.goal || 'Consistent Strength Progression';
@@ -81,7 +82,7 @@ export default function DashboardView() {
       <LevelProgress />
 
       <div className="grid grid-cols-3 gap-2">
-        <Stat label="This week" value={`${stats.trainedDays}/5`} sub="days" />
+        <Stat label="This week" value={`${stats.trainedDays}/${splitTargetDays}`} sub="days" />
         <Stat label="Volume" value={nf.format(Math.round(stats.volume))} sub={unit} />
         <Stat label="Cardio" value={stats.cardioMinutes} sub="mins" />
       </div>

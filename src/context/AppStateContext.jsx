@@ -6,7 +6,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { SPLIT_DAYS, CORE_LIFTS } from '../data/exercises.js';
+import { SPLIT_DAYS, CORE_LIFTS, PRESET_SPLITS } from '../data/exercises.js';
 import { todayISO, isoWeekKey, addDaysISO } from '../utils/dates.js';
 import {
   levelFromXp,
@@ -27,17 +27,31 @@ export const DEFAULT_STATE = {
     currentWeight: 73,
     goalWeight: 75,
     goal: 'Consistent Strength Progression',
+    activeSplitKey: 'preset-pplul',
+    customSplit: null,
   },
   workoutHistory: [],
   // Standalone and session cardio records (0 XP contribution)
   cardioHistory: [],
   // Bodyweight history logs: [{ id, date: 'YYYY-MM-DD', weight: 73.5 }]
   weightHistory: [],
-  // ['2026-W35', ...] — weeks where the full 5-day split was completed (+100 XP)
+  // ['2026-W35', ...] — weeks where the full split was completed (+100 XP)
   completedSplitWeeks: [],
   // Auto-saved in-progress session (survives accidental browser closure)
   activeDraft: null,
 };
+
+export function getActiveSplit(userProfile) {
+  if (
+    userProfile?.activeSplitKey === 'custom' &&
+    Array.isArray(userProfile.customSplit) &&
+    userProfile.customSplit.length > 0
+  ) {
+    return userProfile.customSplit;
+  }
+  const presetKey = userProfile?.activeSplitKey || 'preset-pplul';
+  return PRESET_SPLITS[presetKey]?.days || PRESET_SPLITS['preset-pplul'].days;
+}
 
 function withDefaults(raw) {
   if (!raw || typeof raw !== 'object') return { ...DEFAULT_STATE };
@@ -58,6 +72,10 @@ function withDefaults(raw) {
           ? Number(raw.userProfile.goalWeight)
           : 75,
       streakWeeks: Number(raw.userProfile?.streakWeeks) || 0,
+      activeSplitKey: raw.userProfile?.activeSplitKey || 'preset-pplul',
+      customSplit: Array.isArray(raw.userProfile?.customSplit)
+        ? raw.userProfile.customSplit
+        : null,
     },
     workoutHistory: Array.isArray(raw.workoutHistory) ? raw.workoutHistory : [],
     cardioHistory: Array.isArray(raw.cardioHistory) ? raw.cardioHistory : [],
@@ -88,11 +106,11 @@ function buildDraft(split, date) {
   };
 }
 
-function hasFullSplit(history, weekKey) {
+function hasFullSplit(history, weekKey, activeSplitDays) {
   const logged = new Set(
     history.filter((s) => isoWeekKey(s.date) === weekKey).map((s) => s.splitDay)
   );
-  return SPLIT_DAYS.every((s) => logged.has(s.label));
+  return (activeSplitDays || []).every((s) => logged.has(s.label));
 }
 
 function bumpProfile(profile, amount, lines) {
@@ -186,7 +204,8 @@ export function AppStateProvider({ children }) {
   const startDraft = useCallback((splitKey) => {
     const s = stateRef.current;
     if (s.activeDraft) return;
-    const split = SPLIT_DAYS.find((d) => d.key === splitKey);
+    const splitDays = getActiveSplit(s.userProfile);
+    const split = splitDays.find((d) => d.key === splitKey) || splitDays[0];
     if (!split) return;
     setState({ ...s, activeDraft: buildDraft(split, todayISO()) });
   }, []);
@@ -281,14 +300,15 @@ export function AppStateProvider({ children }) {
     const completedSplitWeeks = [...s.completedSplitWeeks];
     let streakWeeks = Number(s.userProfile.streakWeeks) || 0;
 
-    if (!completedSplitWeeks.includes(weekKey) && hasFullSplit(history, weekKey)) {
+    const activeSplitDays = getActiveSplit(s.userProfile);
+    if (!completedSplitWeeks.includes(weekKey) && hasFullSplit(history, weekKey, activeSplitDays)) {
       completedSplitWeeks.push(weekKey);
       gained += 100;
       const prevWeekKey = isoWeekKey(addDaysISO(date, -7));
       streakWeeks = completedSplitWeeks.includes(prevWeekKey)
         ? streakWeeks + 1
         : 1;
-      lines.push('+100 XP · Full 5-day split complete!');
+      lines.push(`+100 XP · Full ${activeSplitDays.length}-day split complete!`);
     }
 
     // Bug Fix: Preserve streakWeeks in updated userProfile
@@ -324,6 +344,31 @@ export function AppStateProvider({ children }) {
     return { ok: true, total: gained, lines, session };
   }, [fireXp]);
 
+  /** Select a popular preset split */
+  const selectPresetSplit = useCallback((presetKey) => {
+    if (!PRESET_SPLITS[presetKey]) return;
+    setState((s) => ({
+      ...s,
+      userProfile: {
+        ...s.userProfile,
+        activeSplitKey: presetKey,
+      },
+    }));
+  }, []);
+
+  /** Save a customized split routine */
+  const saveCustomSplit = useCallback((customDays) => {
+    if (!Array.isArray(customDays) || customDays.length === 0) return;
+    setState((s) => ({
+      ...s,
+      userProfile: {
+        ...s.userProfile,
+        activeSplitKey: 'custom',
+        customSplit: customDays,
+      },
+    }));
+  }, []);
+
   /** Delete an accidental or duplicate workout session from history */
   const deleteSession = useCallback((sessionId) => {
     setState((s) => ({
@@ -349,10 +394,15 @@ export function AppStateProvider({ children }) {
     replaceState(buildDemoState());
   }, [replaceState]);
 
+  const activeSplit = getActiveSplit(state.userProfile);
+
   const value = {
     state,
+    activeSplit,
     lastXpEvent,
     updateProfile,
+    selectPresetSplit,
+    saveCustomSplit,
     logBodyweight,
     deleteBodyweightEntry,
     startDraft,

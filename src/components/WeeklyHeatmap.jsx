@@ -1,5 +1,5 @@
 import React from 'react';
-import { SPLIT_DAYS } from '../data/exercises.js';
+import { useAppState } from '../context/AppStateContext.jsx';
 import {
   todayISO,
   weekStartISO,
@@ -8,19 +8,22 @@ import {
   formatShort,
 } from '../utils/dates.js';
 
-const shortOf = (splitDay) =>
-  SPLIT_DAYS.find((d) => d.label === splitDay)?.short || splitDay;
-
 /** 7-day (Mon–Sun) grid: trained days, active rest days, today, future days. */
 export default function WeeklyHeatmap({ history }) {
+  const { activeSplit } = useAppState();
   const today = todayISO();
   const start = weekStartISO(today);
+
+  const shortOf = (splitDay) =>
+    activeSplit.find((d) => d.label === splitDay)?.short || splitDay;
+
   const days = Array.from({ length: 7 }, (_, i) => {
     const date = addDaysISO(start, i);
     const sessions = (history || []).filter((s) => s.date === date);
     return { date, sessions, isToday: date === today, isFuture: date > today };
   });
   const trainedCount = days.filter((d) => d.sessions.length > 0).length;
+  const targetDays = activeSplit.length;
 
   return (
     <section className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
@@ -28,12 +31,12 @@ export default function WeeklyHeatmap({ history }) {
         <h2 className="text-sm font-bold text-slate-200">This Week</h2>
         <span
           className={`rounded-full border px-2.5 py-1 text-[11px] font-bold ${
-            trainedCount >= 5
+            trainedCount >= targetDays
               ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300'
               : 'border-slate-700 bg-slate-800/60 text-slate-300'
           }`}
         >
-          {trainedCount}/5 split days
+          {trainedCount}/{targetDays} split days
         </span>
       </div>
 

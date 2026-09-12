@@ -1,18 +1,127 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAppState } from '../context/AppStateContext.jsx';
+import { PRESET_SPLITS } from '../data/exercises.js';
 import DataExportImport from './DataExportImport.jsx';
+import CustomSplitBuilderModal from './CustomSplitBuilderModal.jsx';
 
 export default function SettingsView() {
-  const { state, updateProfile } = useAppState();
+  const {
+    state,
+    updateProfile,
+    selectPresetSplit,
+    saveCustomSplit,
+    activeSplit,
+  } = useAppState();
+
   const unit = state.userProfile?.unit || 'kg';
   const goal = state.userProfile?.goal || '';
+  const activeSplitKey = state.userProfile?.activeSplitKey || 'preset-pplul';
+  const customSplit = state.userProfile?.customSplit;
+
+  const [builderOpen, setBuilderOpen] = useState(false);
 
   return (
     <div className="space-y-4 px-4 pt-5 pb-8">
       <header>
         <h1 className="text-2xl font-black text-slate-50">Settings</h1>
-        <p className="mt-0.5 text-xs text-slate-400">Preferences, XP rules &amp; data backup</p>
+        <p className="mt-0.5 text-xs text-slate-400">Preferences, routine &amp; data backup</p>
       </header>
+
+      {/* Training Routine & Split Selection */}
+      <section className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-sm font-bold text-slate-200">Training Routine &amp; Split</h2>
+            <p className="mt-0.5 text-xs text-slate-400">
+              Active: <span className="font-bold text-emerald-300">{activeSplit.length}-Day Split</span>
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setBuilderOpen(true)}
+            className="rounded-xl border border-indigo-500/40 bg-indigo-500/15 px-3 py-1.5 text-xs font-bold text-indigo-300 hover:bg-indigo-500/25 active:scale-95"
+          >
+            {customSplit ? '✏️ Edit Custom Split' : '✨ Build Custom Split'}
+          </button>
+        </div>
+
+        {/* Popular Presets Selector */}
+        <div className="mt-3 space-y-2">
+          {/* Custom Split Option if exists */}
+          {customSplit && (
+            <div
+              onClick={() => updateProfile({ activeSplitKey: 'custom' })}
+              className={`cursor-pointer rounded-xl border p-3 transition ${
+                activeSplitKey === 'custom'
+                  ? 'border-emerald-500/60 bg-emerald-500/15'
+                  : 'border-slate-700 bg-slate-800/40 hover:bg-slate-800/70'
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs font-black text-slate-100">
+                      Custom Split ({customSplit.length} Days)
+                    </span>
+                    <span className="rounded bg-indigo-500/30 px-1.5 py-0.2 text-[9px] font-bold text-indigo-200">
+                      User Defined
+                    </span>
+                  </div>
+                  <p className="mt-0.5 text-[11px] text-slate-400">
+                    {customSplit.map((d) => d.short).join(' · ')}
+                  </p>
+                </div>
+                <span
+                  className={`flex h-5 w-5 items-center justify-center rounded-full border-2 ${
+                    activeSplitKey === 'custom'
+                      ? 'border-emerald-400 bg-emerald-500 text-slate-950 font-black text-xs'
+                      : 'border-slate-600'
+                  }`}
+                >
+                  {activeSplitKey === 'custom' ? '✓' : ''}
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Popular Built-in Presets */}
+          {Object.values(PRESET_SPLITS).map((preset) => {
+            const isSelected = activeSplitKey === preset.id;
+            return (
+              <div
+                key={preset.id}
+                onClick={() => selectPresetSplit(preset.id)}
+                className={`cursor-pointer rounded-xl border p-3 transition ${
+                  isSelected
+                    ? 'border-emerald-500/60 bg-emerald-500/15'
+                    : 'border-slate-700 bg-slate-800/40 hover:bg-slate-800/70'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs font-black text-slate-100">{preset.name}</span>
+                    </div>
+                    <p className="mt-0.5 text-[11px] text-slate-400">{preset.description}</p>
+                    <p className="mt-1 text-[10px] text-slate-500">
+                      {preset.days.map((d) => d.short).join(' · ')}
+                    </p>
+                  </div>
+                  <span
+                    className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${
+                      isSelected
+                        ? 'border-emerald-400 bg-emerald-500 text-slate-950 font-black text-xs'
+                        : 'border-slate-600'
+                    }`}
+                  >
+                    {isSelected ? '✓' : ''}
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
 
       {/* User Preferences (Units & Personal Goals) */}
       <section className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
@@ -52,7 +161,7 @@ export default function SettingsView() {
         {/* Personal Goal Target */}
         <div className="mt-3.5">
           <label className="block text-[11px] font-bold uppercase text-slate-400">
-            Personal Goal / Focus Banner
+            Personal Goal / Motivation Banner
           </label>
           <input
             type="text"
@@ -61,9 +170,6 @@ export default function SettingsView() {
             onChange={(e) => updateProfile({ goal: e.target.value })}
             className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-xs text-slate-100 placeholder:text-slate-500 focus:border-emerald-500 focus:outline-none"
           />
-          <p className="mt-1 text-[10px] text-slate-500">
-            This appears as your personal motivation banner on the dashboard.
-          </p>
         </div>
 
         {/* Goal Bodyweight */}
@@ -83,9 +189,6 @@ export default function SettingsView() {
             }
             className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-sm font-bold text-slate-100 placeholder:text-slate-500 focus:border-emerald-500 focus:outline-none"
           />
-          <p className="mt-1 text-[10px] text-slate-500">
-            Used to calculate your goal progress on the homepage and in history charts.
-          </p>
         </div>
       </section>
 
@@ -104,37 +207,28 @@ export default function SettingsView() {
               +20 XP
             </span>
             <span>
-              Every set of a core compound lift (Bench / Deadlift / Squat) hitting the top of the rep target
+              Every set of a core compound lift (Bench / Deadlift / Squat) hitting top rep target
             </span>
           </li>
           <li className="flex items-start gap-2">
             <span className="shrink-0 rounded bg-emerald-500/20 px-1.5 py-0.5 text-[11px] font-black text-emerald-300">
               +100 XP
             </span>
-            <span>Complete all 5 split days inside one calendar week</span>
-          </li>
-          <li className="flex items-start gap-2">
-            <span className="shrink-0 rounded bg-slate-700 px-1.5 py-0.5 text-[11px] font-black text-slate-300">
-              0 XP
-            </span>
-            <span>Cardio activities (tracked purely for endurance &amp; aerobic conditioning)</span>
+            <span>Complete all days of your active split inside one calendar week</span>
           </li>
         </ul>
-        <p className="mt-3 text-[11px] text-slate-500 leading-relaxed">
-          Every 200 XP levels you up. Consecutive completed split weeks increment your streak.
-        </p>
       </section>
 
       {/* Data Backup & Reset */}
       <DataExportImport />
 
-      {/* About */}
-      <section className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
-        <h2 className="text-sm font-bold text-slate-200">About Consistent Being</h2>
-        <p className="mt-2 text-xs leading-relaxed text-slate-400">
-          Consistent Being is an offline-first progressive web app. All data lives securely on this device under localStorage key <code className="text-slate-300">workout_tracker_state</code>. Add the app to your phone’s Home Screen for one-tap access on the gym floor.
-        </p>
-      </section>
+      {/* Custom Split Builder Modal */}
+      <CustomSplitBuilderModal
+        open={builderOpen}
+        initialSplit={customSplit}
+        onClose={() => setBuilderOpen(false)}
+        onSave={(customDays) => saveCustomSplit(customDays)}
+      />
     </div>
   );
 }
