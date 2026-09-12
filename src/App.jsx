@@ -5,6 +5,7 @@ import DashboardView from './components/DashboardView.jsx';
 import WorkoutListView from './components/WorkoutListView.jsx';
 import ActiveWorkoutView from './components/ActiveWorkoutView.jsx';
 import SettingsView from './components/SettingsView.jsx';
+import HistoryInsightsView from './components/HistoryInsightsView.jsx';
 import XpToast from './components/XpToast.jsx';
 
 export default function App() {
@@ -15,6 +16,7 @@ export default function App() {
           <Route path="/" element={<DashboardView />} />
           <Route path="/workouts" element={<WorkoutListView />} />
           <Route path="/workout/:splitKey" element={<ActiveWorkoutView />} />
+          <Route path="/history" element={<HistoryInsightsView />} />
           <Route path="/settings" element={<SettingsView />} />
           <Route path="*" element={<DashboardView />} />
         </Routes>

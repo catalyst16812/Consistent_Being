@@ -24,11 +24,15 @@ export const DEFAULT_STATE = {
     xpToNextLevel: 200,
     streakWeeks: 0,
     unit: 'kg',
+    currentWeight: 73,
+    goalWeight: 75,
     goal: 'Consistent Strength Progression',
   },
   workoutHistory: [],
   // Standalone and session cardio records (0 XP contribution)
   cardioHistory: [],
+  // Bodyweight history logs: [{ id, date: 'YYYY-MM-DD', weight: 73.5 }]
+  weightHistory: [],
   // ['2026-W35', ...] — weeks where the full 5-day split was completed (+100 XP)
   completedSplitWeeks: [],
   // Auto-saved in-progress session (survives accidental browser closure)
@@ -45,14 +49,22 @@ function withDefaults(raw) {
       ...(raw.userProfile || {}),
       unit: raw.userProfile?.unit || 'kg',
       goal: raw.userProfile?.goal || 'Consistent Strength Progression',
+      currentWeight:
+        raw.userProfile?.currentWeight !== undefined
+          ? Number(raw.userProfile.currentWeight)
+          : 73,
+      goalWeight:
+        raw.userProfile?.goalWeight !== undefined
+          ? Number(raw.userProfile.goalWeight)
+          : 75,
       streakWeeks: Number(raw.userProfile?.streakWeeks) || 0,
     },
     workoutHistory: Array.isArray(raw.workoutHistory) ? raw.workoutHistory : [],
     cardioHistory: Array.isArray(raw.cardioHistory) ? raw.cardioHistory : [],
+    weightHistory: Array.isArray(raw.weightHistory) ? raw.weightHistory : [],
     completedSplitWeeks: Array.isArray(raw.completedSplitWeeks)
       ? raw.completedSplitWeeks
       : [],
-    // Discard legacy bufferLog if present
   };
 }
 
@@ -117,12 +129,57 @@ export function AppStateProvider({ children }) {
     }
   }, []);
 
-  /** Update user profile settings (e.g. unit 'kg'/'lbs', personal goal) */
+  /** Update user profile settings (e.g. unit 'kg'/'lbs', personal goal, goalWeight) */
   const updateProfile = useCallback((updates) => {
     setState((s) => ({
       ...s,
       userProfile: { ...s.userProfile, ...updates },
     }));
+  }, []);
+
+  /** Log or update bodyweight for a given date */
+  const logBodyweight = useCallback((weightVal, date = todayISO()) => {
+    const weightNum = Number(weightVal);
+    if (!weightNum || weightNum <= 0) return;
+    setState((s) => {
+      const existingIndex = s.weightHistory.findIndex((w) => w.date === date);
+      let updatedWeightHistory;
+      if (existingIndex >= 0) {
+        updatedWeightHistory = s.weightHistory.map((item, idx) =>
+          idx === existingIndex ? { ...item, weight: weightNum } : item
+        );
+      } else {
+        updatedWeightHistory = [
+          ...s.weightHistory,
+          { id: `bw-${date}-${Date.now()}`, date, weight: weightNum },
+        ];
+      }
+      updatedWeightHistory.sort((a, b) => a.date.localeCompare(b.date));
+      return {
+        ...s,
+        userProfile: {
+          ...s.userProfile,
+          currentWeight: weightNum,
+        },
+        weightHistory: updatedWeightHistory,
+      };
+    });
+  }, []);
+
+  /** Delete a mistaken bodyweight entry from history */
+  const deleteBodyweightEntry = useCallback((id) => {
+    setState((s) => {
+      const nextHistory = s.weightHistory.filter((w) => w.id !== id);
+      const lastEntry = nextHistory[nextHistory.length - 1];
+      return {
+        ...s,
+        userProfile: {
+          ...s.userProfile,
+          currentWeight: lastEntry ? lastEntry.weight : s.userProfile.currentWeight,
+        },
+        weightHistory: nextHistory,
+      };
+    });
   }, []);
 
   /** Create a new in-progress session from the split template. */
@@ -296,6 +353,8 @@ export function AppStateProvider({ children }) {
     state,
     lastXpEvent,
     updateProfile,
+    logBodyweight,
+    deleteBodyweightEntry,
     startDraft,
     updateDraft,
     clearDraft,

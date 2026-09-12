@@ -65,6 +65,28 @@ export default function SettingsView() {
             This appears as your personal motivation banner on the dashboard.
           </p>
         </div>
+
+        {/* Goal Bodyweight */}
+        <div className="mt-3.5">
+          <label className="block text-[11px] font-bold uppercase text-slate-400">
+            Target Goal Bodyweight ({unit})
+          </label>
+          <input
+            type="number"
+            step="0.1"
+            min="20"
+            max="350"
+            value={state.userProfile?.goalWeight || ''}
+            placeholder="e.g. 75"
+            onChange={(e) =>
+              updateProfile({ goalWeight: Number(e.target.value) || '' })
+            }
+            className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-sm font-bold text-slate-100 placeholder:text-slate-500 focus:border-emerald-500 focus:outline-none"
+          />
+          <p className="mt-1 text-[10px] text-slate-500">
+            Used to calculate your goal progress on the homepage and in history charts.
+          </p>
+        </div>
       </section>
 
       {/* How XP Works */}

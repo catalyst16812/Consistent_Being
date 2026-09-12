@@ -32,6 +32,23 @@ function DumbbellIcon({ className }) {
   );
 }
 
+function HistoryChartIcon({ className }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <path d="M3 3v18h18" />
+      <path d="M19 9l-5 5-4-4-3 3" />
+    </svg>
+  );
+}
+
 function GearIcon({ className }) {
   return (
     <svg
@@ -51,28 +68,29 @@ function GearIcon({ className }) {
 const TABS = [
   { to: '/', end: true, label: 'Dashboard', icon: HomeIcon },
   { to: '/workouts', end: false, label: 'Workouts', icon: DumbbellIcon },
+  { to: '/history', end: false, label: 'History', icon: HistoryChartIcon },
   { to: '/settings', end: false, label: 'Settings', icon: GearIcon },
 ];
 
 export default function Navigation() {
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-800 bg-slate-950/90 backdrop-blur"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-800 bg-slate-950/95 backdrop-blur"
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
-      <div className="mx-auto grid max-w-md grid-cols-3">
+      <div className="mx-auto grid max-w-md grid-cols-4">
         {TABS.map((tab) => (
           <NavLink
             key={tab.to}
             to={tab.to}
             end={tab.end}
             className={({ isActive }) =>
-              `flex flex-col items-center gap-1 py-2.5 text-[11px] font-semibold transition ${
+              `flex flex-col items-center gap-1 py-2 text-[11px] font-bold transition ${
                 isActive ? 'text-emerald-400' : 'text-slate-500 hover:text-slate-300'
               }`
             }
           >
-            <tab.icon className="h-6 w-6" />
+            <tab.icon className="h-5 w-5" />
             {tab.label}
           </NavLink>
         ))}

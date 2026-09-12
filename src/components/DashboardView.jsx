@@ -6,6 +6,7 @@ import LevelProgress from './LevelProgress.jsx';
 import WeeklyHeatmap from './WeeklyHeatmap.jsx';
 import StrengthChart from './StrengthChart.jsx';
 import CardioLogger from './CardioLogger.jsx';
+import BodyweightWidget from './BodyweightWidget.jsx';
 
 const nf = new Intl.NumberFormat('en');
 
@@ -84,6 +85,8 @@ export default function DashboardView() {
         <Stat label="Volume" value={nf.format(Math.round(stats.volume))} sub={unit} />
         <Stat label="Cardio" value={stats.cardioMinutes} sub="mins" />
       </div>
+
+      <BodyweightWidget />
 
       <WeeklyHeatmap history={state.workoutHistory} />
 
