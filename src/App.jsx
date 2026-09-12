@@ -6,6 +6,7 @@ import WorkoutListView from './components/WorkoutListView.jsx';
 import ActiveWorkoutView from './components/ActiveWorkoutView.jsx';
 import SettingsView from './components/SettingsView.jsx';
 import HistoryInsightsView from './components/HistoryInsightsView.jsx';
+import InstallPwaPrompt from './components/InstallPwaPrompt.jsx';
 import XpToast from './components/XpToast.jsx';
 
 export default function App() {
@@ -22,6 +23,7 @@ export default function App() {
           <Route path="*" element={<DashboardView />} />
         </Routes>
       </main>
+      <InstallPwaPrompt />
       <Navigation />
       <XpToast />
     </div>

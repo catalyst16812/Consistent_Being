@@ -3,6 +3,7 @@ import { useAppState } from '../context/AppStateContext.jsx';
 import { PRESET_SPLITS } from '../data/exercises.js';
 import DataExportImport from './DataExportImport.jsx';
 import CustomSplitBuilderModal from './CustomSplitBuilderModal.jsx';
+import { usePwaInstall } from '../hooks/usePwaInstall.js';
 
 export default function SettingsView() {
   const {
@@ -13,12 +14,21 @@ export default function SettingsView() {
     activeSplit,
   } = useAppState();
 
+  const {
+    canInstall,
+    isStandalone,
+    isIOS,
+    promptInstall,
+    resetDismissal,
+  } = usePwaInstall();
+
   const unit = state.userProfile?.unit || 'kg';
   const goal = state.userProfile?.goal || '';
   const activeSplitKey = state.userProfile?.activeSplitKey || 'preset-pplul';
   const customSplit = state.userProfile?.customSplit;
 
   const [builderOpen, setBuilderOpen] = useState(false);
+  const [showIosGuide, setShowIosGuide] = useState(false);
 
   return (
     <div className="space-y-4 px-4 pt-5 pb-8">
@@ -217,6 +227,58 @@ export default function SettingsView() {
             <span>Complete all days of your active split inside one calendar week</span>
           </li>
         </ul>
+      </section>
+
+      {/* App Installation (PWA) */}
+      <section className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-sm font-bold text-slate-200">App Installation (PWA)</h2>
+            <p className="mt-0.5 text-xs text-slate-400">
+              {isStandalone
+                ? 'Installed & running in standalone mode'
+                : 'Install as app for offline access & full-screen'}
+            </p>
+          </div>
+          {isStandalone ? (
+            <span className="rounded-full border border-emerald-500/40 bg-emerald-500/15 px-2.5 py-1 text-[11px] font-bold text-emerald-300">
+              ✓ Installed
+            </span>
+          ) : canInstall ? (
+            <button
+              type="button"
+              onClick={promptInstall}
+              className="rounded-xl bg-emerald-500 px-3 py-1.5 text-xs font-bold text-slate-950 active:scale-95"
+            >
+              Install App
+            </button>
+          ) : isIOS ? (
+            <button
+              type="button"
+              onClick={() => {
+                resetDismissal();
+                setShowIosGuide((v) => !v);
+              }}
+              className="rounded-xl border border-sky-500/40 bg-sky-500/15 px-3 py-1.5 text-xs font-bold text-sky-300 hover:bg-sky-500/25 active:scale-95"
+            >
+              {showIosGuide ? 'Hide Guide' : 'iOS Install Guide'}
+            </button>
+          ) : (
+            <span className="text-[11px] font-medium text-slate-500">Browser Mode</span>
+          )}
+        </div>
+
+        {/* iOS Step-by-step guide preview */}
+        {showIosGuide && !isStandalone && (
+          <div className="mt-3 space-y-2 rounded-xl border border-slate-800 bg-slate-950/70 p-3 text-xs text-slate-300">
+            <p className="font-bold text-slate-200">How to add to Home Screen in Safari:</p>
+            <ol className="list-decimal list-inside space-y-1 text-slate-400">
+              <li>Tap the <strong>Share</strong> button in Safari's toolbar.</li>
+              <li>Scroll down and tap <strong>Add to Home Screen</strong>.</li>
+              <li>Tap <strong>Add</strong> in the top right corner.</li>
+            </ol>
+          </div>
+        )}
       </section>
 
       {/* Data Backup & Reset */}
