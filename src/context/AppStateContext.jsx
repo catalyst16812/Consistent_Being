@@ -23,10 +23,12 @@ export const DEFAULT_STATE = {
     currentXP: 0,
     xpToNextLevel: 200,
     streakWeeks: 0,
+    unit: 'kg',
+    goal: 'Consistent Strength Progression',
   },
   workoutHistory: [],
-  // { 'YYYY-MM-DD': true } — idempotency ledger for the +15 XP snack bonus
-  bufferLog: {},
+  // Standalone and session cardio records (0 XP contribution)
+  cardioHistory: [],
   // ['2026-W35', ...] — weeks where the full 5-day split was completed (+100 XP)
   completedSplitWeeks: [],
   // Auto-saved in-progress session (survives accidental browser closure)
@@ -38,25 +40,32 @@ function withDefaults(raw) {
   return {
     ...DEFAULT_STATE,
     ...raw,
-    userProfile: { ...DEFAULT_STATE.userProfile, ...(raw.userProfile || {}) },
+    userProfile: {
+      ...DEFAULT_STATE.userProfile,
+      ...(raw.userProfile || {}),
+      unit: raw.userProfile?.unit || 'kg',
+      goal: raw.userProfile?.goal || 'Consistent Strength Progression',
+      streakWeeks: Number(raw.userProfile?.streakWeeks) || 0,
+    },
     workoutHistory: Array.isArray(raw.workoutHistory) ? raw.workoutHistory : [],
-    bufferLog:
-      raw.bufferLog && typeof raw.bufferLog === 'object' ? raw.bufferLog : {},
+    cardioHistory: Array.isArray(raw.cardioHistory) ? raw.cardioHistory : [],
     completedSplitWeeks: Array.isArray(raw.completedSplitWeeks)
       ? raw.completedSplitWeeks
       : [],
+    // Discard legacy bufferLog if present
   };
 }
 
-function buildDraft(split, date, bufferLog) {
+function buildDraft(split, date) {
   return {
     startedAt: Date.now(),
     date,
     splitKey: split.key,
     splitDay: split.label,
-    calorieBufferConsumed: bufferLog?.[date] === true,
+    cardio: null, // Optional in-workout cardio finisher
     exercises: split.exercises.map((ex) => ({
       name: ex.name,
+      originalName: ex.name,
       targetReps: ex.targetReps,
       sets: Array.from({ length: ex.sets }, (_, i) => ({
         setNumber: i + 1,
@@ -84,7 +93,7 @@ function bumpProfile(profile, amount, lines) {
     ...profile,
     currentXP: nextXP,
     currentLevel: nextLevel,
-    // Threshold (cumulative XP) for the NEXT level: level 3 -> 600.
+    // Threshold (cumulative XP) for the NEXT level
     xpToNextLevel: xpToReachLevel(nextLevel + 1),
   };
 }
@@ -108,13 +117,21 @@ export function AppStateProvider({ children }) {
     }
   }, []);
 
+  /** Update user profile settings (e.g. unit 'kg'/'lbs', personal goal) */
+  const updateProfile = useCallback((updates) => {
+    setState((s) => ({
+      ...s,
+      userProfile: { ...s.userProfile, ...updates },
+    }));
+  }, []);
+
   /** Create a new in-progress session from the split template. */
   const startDraft = useCallback((splitKey) => {
     const s = stateRef.current;
     if (s.activeDraft) return;
     const split = SPLIT_DAYS.find((d) => d.key === splitKey);
     if (!split) return;
-    setState({ ...s, activeDraft: buildDraft(split, todayISO(), s.bufferLog) });
+    setState({ ...s, activeDraft: buildDraft(split, todayISO()) });
   }, []);
 
   /** Patch the in-progress session (pure functional update → safe to batch). */
@@ -133,38 +150,26 @@ export function AppStateProvider({ children }) {
     setState((s) => ({ ...s, activeDraft: null }));
   }, []);
 
-  /**
-   * Daily 300 kcal buffer snack check-off.
-   * Awards +15 XP exactly once per calendar day (bufferLog is the ledger).
-   */
-  const setBuffer = useCallback(
-    (date, value) => {
-      const s = stateRef.current;
-      const current = s.bufferLog[date] === true;
-      if (value === current) return { ok: false };
-      const bufferLog = { ...s.bufferLog };
-      const lines = [];
-      let profile = s.userProfile;
-      let gained = 0;
-      if (value) {
-        bufferLog[date] = true;
-        gained = 15;
-        lines.push('+15 XP · 300 kcal buffer snack');
-      } else {
-        delete bufferLog[date];
-      }
-      if (gained) profile = bumpProfile(profile, gained, lines);
-      setState({ ...s, bufferLog, userProfile: profile });
-      fireXp(gained, lines);
-      return { ok: true, total: gained, lines };
-    },
-    [fireXp]
-  );
+  /** Log standalone cardio (does NOT add XP) */
+  const addCardioSession = useCallback((cardioEntry) => {
+    setState((s) => ({
+      ...s,
+      cardioHistory: [
+        ...s.cardioHistory,
+        {
+          id: `cardio-${Date.now()}`,
+          date: todayISO(),
+          ...cardioEntry,
+        },
+      ],
+    }));
+  }, []);
 
   /**
    * Commit the in-progress session to history and award XP:
    *   +50 session · +20 per core lift at the upper rep limit (all sets)
-   *   +15 buffer snack (first time for the date) · +100 full 5-day split week
+   *   +100 full 5-day split week
+   * Note: Cardio provides 0 XP contribution.
    */
   const commitSession = useCallback(() => {
     const s = stateRef.current;
@@ -188,8 +193,8 @@ export function AppStateProvider({ children }) {
       }))
       .filter((ex) => ex.sets.length > 0);
 
-    if (exercises.length === 0) {
-      return { ok: false, reason: 'Log at least one set.' };
+    if (exercises.length === 0 && !draft.cardio) {
+      return { ok: false, reason: 'Log at least one set or cardio.' };
     }
 
     const date = draft.date;
@@ -206,47 +211,70 @@ export function AppStateProvider({ children }) {
       }
     }
 
-    const bufferLog = { ...s.bufferLog };
-    if (draft.calorieBufferConsumed && bufferLog[date] !== true) {
-      bufferLog[date] = true;
-      gained += 15;
-      lines.push('+15 XP · 300 kcal buffer snack');
-    }
-
     const session = {
       sessionId: String(Date.now()),
       date,
       splitDay: draft.splitDay,
-      calorieBufferConsumed: bufferLog[date] === true,
       exercises,
+      cardio: draft.cardio || null,
     };
     const history = [...s.workoutHistory, session];
 
     const weekKey = isoWeekKey(date);
     const completedSplitWeeks = [...s.completedSplitWeeks];
-    let streakWeeks = s.userProfile.streakWeeks;
+    let streakWeeks = Number(s.userProfile.streakWeeks) || 0;
+
     if (!completedSplitWeeks.includes(weekKey) && hasFullSplit(history, weekKey)) {
       completedSplitWeeks.push(weekKey);
       gained += 100;
-      streakWeeks = completedSplitWeeks.includes(isoWeekKey(addDaysISO(date, -7)))
+      const prevWeekKey = isoWeekKey(addDaysISO(date, -7));
+      streakWeeks = completedSplitWeeks.includes(prevWeekKey)
         ? streakWeeks + 1
         : 1;
       lines.push('+100 XP · Full 5-day split complete!');
     }
 
-    const profile = bumpProfile(s.userProfile, gained, lines);
+    // Bug Fix: Preserve streakWeeks in updated userProfile
+    const profile = bumpProfile(
+      { ...s.userProfile, streakWeeks },
+      gained,
+      lines
+    );
+
+    // If session had cardio, also append to cardio history for standalone tracking
+    let nextCardioHistory = s.cardioHistory;
+    if (draft.cardio) {
+      nextCardioHistory = [
+        ...s.cardioHistory,
+        {
+          id: `cardio-${Date.now()}`,
+          date,
+          sessionId: session.sessionId,
+          ...draft.cardio,
+        },
+      ];
+    }
 
     setState({
       ...s,
       userProfile: profile,
       workoutHistory: history,
-      bufferLog,
+      cardioHistory: nextCardioHistory,
       completedSplitWeeks,
       activeDraft: null,
     });
     fireXp(gained, lines);
     return { ok: true, total: gained, lines, session };
   }, [fireXp]);
+
+  /** Delete an accidental or duplicate workout session from history */
+  const deleteSession = useCallback((sessionId) => {
+    setState((s) => ({
+      ...s,
+      workoutHistory: s.workoutHistory.filter((sess) => sess.sessionId !== sessionId),
+      cardioHistory: s.cardioHistory.filter((c) => c.sessionId !== sessionId),
+    }));
+  }, []);
 
   /** Replace the whole state (import / demo). */
   const replaceState = useCallback((next) => {
@@ -267,11 +295,13 @@ export function AppStateProvider({ children }) {
   const value = {
     state,
     lastXpEvent,
+    updateProfile,
     startDraft,
     updateDraft,
     clearDraft,
-    setBuffer,
+    addCardioSession,
     commitSession,
+    deleteSession,
     replaceState,
     resetAll,
     loadDemo,

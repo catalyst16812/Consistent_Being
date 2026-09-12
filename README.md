@@ -1,32 +1,41 @@
 # Consistent Being
 
-Personal strength-progression & workout-consistency tracker — an offline-first
-progressive web app (PWA) built to run a structured 5-day split while
-stabilizing body weight (~73 kg) and rebuilding core lift metrics (e.g. back to
-a 60 kg bench press for 5–6 reps).
+Personal strength-progression & workout-consistency tracker — an offline-first progressive web app (PWA) built to run structured strength splits, track progressive overload, monitor cardiovascular endurance, and gamify training consistency.
 
 ## Features
 
-- **Dashboard & analytics** — weekly heatmap (5 train / 2 rest), Recharts line
-  chart of max working weight for Bench / Deadlift / Squat, level + XP bar,
-  weekly volume, and the daily 300 kcal buffer-snack checklist.
-- **Workout logger** — 5-day split (Push / Pull / Legs / Upper / Lower) with
-  ghosting (last session's weight × reps shown as input placeholders),
-  auto-save to `localStorage` on every keystroke (survives closing the browser),
-  and integrated rest timers (60s / 90s / 3m) with visual + haptic feedback.
-- **Exercise swaps** — modal with biomechanically equivalent movements;
-  ghosting dynamically follows the *new* exercise's history.
-- **XP & leveling** — +50 session · +20 core lift at the upper rep limit (all
-  sets) · +15 daily buffer snack · +100 full 5-day split in a calendar week.
-  Every 200 XP levels you up, with rank titles; consecutive split weeks build a
-  streak.
-- **Data management** — export/import the entire state as `.json`, sample data,
-  and full reset.
+- **Dashboard & Analytics**:
+  - Weekly Heatmap (5 train / 2 rest) with unique days trained.
+  - Recharts strength trajectory line chart of max working weight for Bench / Deadlift / Squat.
+  - Level + XP progression bar and weekly volume metrics.
+  - Cardio & conditioning tracker.
+- **Workout Logger**:
+  - 5-Day Split (Push / Pull / Legs / Upper / Lower) with dynamic set addition/removal.
+  - Progressive overload ghosting (previous session's weight and reps shown as input placeholders, supporting both weighted and bodyweight exercises).
+  - Auto-save to `localStorage` on every keystroke (survives accidental browser closure).
+  - Integrated rest timers (60s / 90s / 3m) with visual pulse, Web Audio tone, and haptic feedback.
+  - Cardio Finisher section (duration, distance, intensity — 0 XP contribution).
+- **Exercise Library & Form Tips**:
+  - Comprehensive database of 75+ exercises with tags (`Compound` vs `Isolation`), equipment, and target muscles.
+  - Interactive `(i)` info button with training recommendations (heavy weight vs high-rep volume) and form cues.
+  - Bi-directional exercise swaps: easily switch to biomechanically equivalent movements and back to the original movement anytime.
+  - Add custom or library exercises to any active workout session.
+- **Session History Management**:
+  - Browse past logged workouts with full set breakdown and total volume.
+  - Safe deletion of accidental or duplicate workouts with immediate metrics update.
+- **XP & Leveling**:
+  - +50 XP: Session logged.
+  - +20 XP: Core compound lift hitting the top rep target on all sets.
+  - +100 XP: Completing all 5 split days within a calendar week.
+  - Every 200 XP levels you up through 10 rank titles; consecutive split weeks build your streak.
+- **Preferences & Data Management**:
+  - Toggle between Metric (`kg`) and Imperial (`lbs`) units.
+  - Customizable motivation and personal goals banner.
+  - Complete JSON backup export / import, sample data, and factory reset.
 
-## Tech stack
+## Tech Stack
 
-React 18 · Vite · Tailwind CSS 4 · React Context API · `localStorage`
-(key `workout_tracker_state`) · Recharts · `vite-plugin-pwa` (Workbox).
+React 18 · Vite · Tailwind CSS 4 · React Context API · `localStorage` (key `workout_tracker_state`) · Recharts · Web Audio API · `vite-plugin-pwa` (Workbox).
 
 ## Development
 
@@ -40,44 +49,6 @@ npm run preview  # preview the production build
 ## Deploying to Vercel
 
 1. Push this repository to GitHub.
-2. In Vercel: *Add New → Project* → import the repo.
-3. Vercel auto-detects Vite (build `npm run build`, output `dist`). No
-   `vercel.json` needed.
-4. Deploy, open the live URL on your phone, and use **Add to Home Screen** to
-   verify offline logging.
-
-## Data model
-
-Single JSON object under `localStorage['workout_tracker_state']`:
-
-```json
-{
-  "userProfile": { "currentLevel": 3, "currentXP": 450, "xpToNextLevel": 600, "streakWeeks": 2 },
-  "workoutHistory": [
-    {
-      "sessionId": "1719823450",
-      "date": "2026-09-01",
-      "splitDay": "Day 1 - Push",
-      "calorieBufferConsumed": true,
-      "exercises": [
-        {
-          "name": "Flat Barbell Bench Press",
-          "targetReps": "6-8",
-          "sets": [
-            { "setNumber": 1, "weight": 60, "reps": 6 },
-            { "setNumber": 2, "weight": 60, "reps": 5 },
-            { "setNumber": 3, "weight": 55, "reps": 7 }
-          ]
-        }
-      ]
-    }
-  ],
-  "bufferLog": { "2026-09-01": true },
-  "completedSplitWeeks": ["2026-W35"],
-  "activeDraft": null
-}
-```
-
-`bufferLog` and `completedSplitWeeks` are idempotency ledgers so the +15 XP
-snack bonus and the +100 XP split-week bonus are awarded exactly once;
-`activeDraft` is the auto-saved in-progress session.
+2. In Vercel: *Add New → Project* → import the repo (set Root Directory to `Consistent_Being-main` if using nested folders).
+3. Vercel auto-detects Vite (build `npm run build`, output `dist`). No `vercel.json` needed.
+4. Open the live URL on your phone and use **Add to Home Screen** for full offline app usage.

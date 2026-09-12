@@ -13,7 +13,7 @@ import { CORE_LIFTS, LIFT_SHORT, LIFT_COLORS } from '../data/exercises.js';
 import { formatShort } from '../utils/dates.js';
 
 /** Line chart of the max working weight per session for the 3 core lifts. */
-export default function StrengthChart({ history }) {
+export default function StrengthChart({ history, unit = 'kg' }) {
   const data = useMemo(() => {
     const byDate = {};
     for (const session of history) {
@@ -26,7 +26,8 @@ export default function StrengthChart({ history }) {
           date: session.date,
           label: formatShort(session.date),
         };
-        byDate[session.date][lift] = max;
+        // Bug Fix: Keep the maximum working weight if multiple sessions occur on the same date
+        byDate[session.date][lift] = Math.max(byDate[session.date][lift] || 0, max);
       }
     }
     return Object.values(byDate).sort((a, b) => a.date.localeCompare(b.date));
@@ -37,8 +38,8 @@ export default function StrengthChart({ history }) {
       <section className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
         <h2 className="text-sm font-bold text-slate-200">Strength Trajectory</h2>
         <p className="mt-3 text-sm text-slate-500">
-          Log your first session to start tracking Bench, Deadlift &amp; Squat
-          working weights over time.
+          Log your first session with Bench Press, Deadlift, or Squat to start tracking
+          strength progression over time.
         </p>
       </section>
     );
@@ -48,7 +49,7 @@ export default function StrengthChart({ history }) {
     <section className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
       <h2 className="text-sm font-bold text-slate-200">
         Strength Trajectory{' '}
-        <span className="font-normal text-slate-500">· max working weight (kg)</span>
+        <span className="font-normal text-slate-500">· max working weight ({unit})</span>
       </h2>
       <div className="mt-2 h-56">
         <ResponsiveContainer width="100%" height="100%">
@@ -76,7 +77,7 @@ export default function StrengthChart({ history }) {
               }}
               labelStyle={{ color: '#e2e8f0' }}
               formatter={(value, name) => [
-                `${value} kg`,
+                `${value} ${unit}`,
                 LIFT_SHORT[name] || name,
               ]}
             />

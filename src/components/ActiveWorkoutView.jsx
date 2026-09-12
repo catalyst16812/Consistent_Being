@@ -6,18 +6,23 @@ import { formatLong } from '../utils/dates.js';
 import { getGhost } from '../utils/ghost.js';
 import ExerciseRow from './ExerciseRow.jsx';
 import RestTimer from './RestTimer.jsx';
-import CalorieBufferToggle from './CalorieBufferToggle.jsx';
 import ExerciseSwapModal from './ExerciseSwapModal.jsx';
+import AddExerciseModal from './AddExerciseModal.jsx';
+import CardioLogger from './CardioLogger.jsx';
 
 export default function ActiveWorkoutView() {
-  const { state, startDraft, updateDraft, clearDraft, commitSession, setBuffer } =
+  const { state, startDraft, updateDraft, clearDraft, commitSession } =
     useAppState();
   const { splitKey } = useParams();
   const navigate = useNavigate();
   const split = SPLIT_DAYS.find((s) => s.key === splitKey) || SPLIT_DAYS[0];
   const draft = state.activeDraft;
+  const unit = state.userProfile?.unit || 'kg';
+
   const [swapIndex, setSwapIndex] = useState(null);
+  const [addExerciseOpen, setAddExerciseOpen] = useState(false);
   const [savedFlash, setSavedFlash] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const firstRender = useRef(true);
 
   // No in-progress session for this day? Start one from the template.
@@ -79,17 +84,26 @@ export default function ActiveWorkoutView() {
   }
 
   const onFinish = () => {
-    const hasData = draft.exercises.some((ex) =>
+    if (isSubmitting) return;
+
+    const hasSets = draft.exercises.some((ex) =>
       ex.sets.some(
         (s) => (Number(s.weight) || 0) > 0 || (Number(s.reps) || 0) > 0
       )
     );
-    if (!hasData) {
-      window.alert('Log at least one set to finish the session.');
+    if (!hasSets && !draft.cardio) {
+      window.alert('Log at least one set or cardio to finish the session.');
       return;
     }
+
+    setIsSubmitting(true);
     const res = commitSession();
-    if (res.ok) navigate('/workouts');
+    if (res.ok) {
+      navigate('/workouts');
+    } else {
+      setIsSubmitting(false);
+      alert(res.reason || 'Failed to complete session.');
+    }
   };
 
   const onDiscard = () => {
@@ -99,10 +113,23 @@ export default function ActiveWorkoutView() {
     }
   };
 
-  const onBufferChange = (v) => {
-    // Ledger (once-per-day +15 XP) first, then mirror the flag onto the draft.
-    setBuffer(draft.date, v);
-    updateDraft((d) => ({ ...d, calorieBufferConsumed: v }));
+  const handleAddNewExercise = ({ name, targetReps, sets }) => {
+    updateDraft((d) => ({
+      ...d,
+      exercises: [
+        ...d.exercises,
+        {
+          name,
+          originalName: name,
+          targetReps,
+          sets: Array.from({ length: sets }, (_, idx) => ({
+            setNumber: idx + 1,
+            weight: '',
+            reps: '',
+          })),
+        },
+      ],
+    }));
   };
 
   return (
@@ -145,17 +172,13 @@ export default function ActiveWorkoutView() {
 
       <RestTimer />
 
-      <CalorieBufferToggle
-        checked={draft.calorieBufferConsumed}
-        onChange={onBufferChange}
-        dateLabel={formatLong(draft.date)}
-      />
-
+      {/* Exercises List */}
       <div className="space-y-3">
         {draft.exercises.map((ex, i) => (
           <ExerciseRow
             key={`${ex.name}-${i}`}
             exercise={ex}
+            unit={unit}
             ghost={getGhost(ex.name, state.workoutHistory)}
             onSetChange={(setNumber, field, value) =>
               updateDraft((d) => ({
@@ -210,15 +233,32 @@ export default function ActiveWorkoutView() {
             onSwap={() => setSwapIndex(i)}
           />
         ))}
-      </div>
 
-      <div className="space-y-2 pt-1">
+        {/* Add new exercise button */}
         <button
           type="button"
-          onClick={onFinish}
-          className="w-full rounded-2xl bg-emerald-500 py-4 text-base font-black text-slate-950 shadow-lg shadow-emerald-500/20 active:scale-[0.99]"
+          onClick={() => setAddExerciseOpen(true)}
+          className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-slate-800 bg-slate-900/40 py-3 text-xs font-bold text-slate-300 transition hover:border-emerald-500/50 hover:bg-slate-900/80 hover:text-emerald-300 active:scale-[0.99]"
         >
-          Finish Session
+          <span className="text-base leading-none">+</span> Add Exercise to this Session
+        </button>
+      </div>
+
+      {/* Cardio Finisher Section (0 XP) */}
+      <CardioLogger
+        unit={unit === 'lbs' ? 'miles' : 'km'}
+        initialData={draft.cardio}
+        onSave={(cardioData) => updateDraft((d) => ({ ...d, cardio: cardioData }))}
+      />
+
+      <div className="space-y-2 pt-1 pb-4">
+        <button
+          type="button"
+          disabled={isSubmitting}
+          onClick={onFinish}
+          className="w-full rounded-2xl bg-emerald-500 py-4 text-base font-black text-slate-950 shadow-lg shadow-emerald-500/20 disabled:opacity-50 active:scale-[0.99]"
+        >
+          {isSubmitting ? 'Finishing…' : 'Finish Session'}
         </button>
         <button
           type="button"
@@ -229,9 +269,11 @@ export default function ActiveWorkoutView() {
         </button>
       </div>
 
+      {/* Exercise Swap Modal */}
       <ExerciseSwapModal
         open={swapIndex !== null}
         currentName={swapIndex !== null ? draft.exercises[swapIndex].name : ''}
+        originalName={swapIndex !== null ? draft.exercises[swapIndex].originalName : ''}
         onClose={() => setSwapIndex(null)}
         onSelect={(name) => {
           const i = swapIndex;
@@ -241,6 +283,13 @@ export default function ActiveWorkoutView() {
           }));
           setSwapIndex(null);
         }}
+      />
+
+      {/* Add New Exercise Modal */}
+      <AddExerciseModal
+        open={addExerciseOpen}
+        onClose={() => setAddExerciseOpen(false)}
+        onAdd={handleAddNewExercise}
       />
     </div>
   );

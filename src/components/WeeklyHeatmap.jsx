@@ -17,7 +17,7 @@ export default function WeeklyHeatmap({ history }) {
   const start = weekStartISO(today);
   const days = Array.from({ length: 7 }, (_, i) => {
     const date = addDaysISO(start, i);
-    const sessions = history.filter((s) => s.date === date);
+    const sessions = (history || []).filter((s) => s.date === date);
     return { date, sessions, isToday: date === today, isFuture: date > today };
   });
   const trainedCount = days.filter((d) => d.sessions.length > 0).length;

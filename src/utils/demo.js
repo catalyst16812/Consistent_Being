@@ -45,7 +45,6 @@ export function buildDemoState() {
   const today = todayISO();
   const thisWeekStart = weekStartISO(today);
   const history = [];
-  const bufferLog = {};
   const completedSplitWeeks = [];
 
   [2, 1, 0].forEach((offset) => {
@@ -72,10 +71,9 @@ export function buildDemoState() {
         sessionId: `demo-${date}-${split.key}`,
         date,
         splitDay: split.label,
-        calorieBufferConsumed: true,
         exercises,
+        cardio: dayIdx === 0 ? { type: 'Incline Treadmill Walk', duration: 15, distance: 1.2, intensity: 'Moderate' } : null,
       });
-      bufferLog[date] = true;
     });
     if (fullWeek) completedSplitWeeks.push(isoWeekKey(weekStart));
   });
@@ -90,9 +88,20 @@ export function buildDemoState() {
       currentXP: 450,
       xpToNextLevel: 600,
       streakWeeks: completedSplitWeeks.length,
+      unit: 'kg',
+      goal: 'Consistent Strength Progression',
     },
     workoutHistory: history,
-    bufferLog,
+    cardioHistory: [
+      {
+        id: 'demo-cardio-1',
+        date: today,
+        type: 'Incline Treadmill Walk',
+        duration: 20,
+        distance: 1.8,
+        intensity: 'Moderate',
+      },
+    ],
     completedSplitWeeks,
     activeDraft: null,
   };
