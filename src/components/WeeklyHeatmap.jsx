@@ -10,7 +10,7 @@ import {
 
 /** 7-day (Mon–Sun) grid: trained days, active rest days, today, future days. */
 export default function WeeklyHeatmap({ history }) {
-  const { activeSplit } = useAppState();
+  const { state, activeSplit } = useAppState();
   const today = todayISO();
   const start = weekStartISO(today);
 
@@ -20,7 +20,8 @@ export default function WeeklyHeatmap({ history }) {
   const days = Array.from({ length: 7 }, (_, i) => {
     const date = addDaysISO(start, i);
     const sessions = (history || []).filter((s) => s.date === date);
-    return { date, sessions, isToday: date === today, isFuture: date > today };
+    const attended = (state.attendanceHistory || []).some((a) => a.date === date);
+    return { date, sessions, attended, isToday: date === today, isFuture: date > today };
   });
   const trainedCount = days.filter((d) => d.sessions.length > 0).length;
   const targetDays = activeSplit.length;
@@ -44,15 +45,19 @@ export default function WeeklyHeatmap({ history }) {
         {days.map((d, i) => {
           const base = d.sessions.length
             ? 'border-emerald-500/60 bg-emerald-500/15 text-emerald-300'
-            : d.isToday
-              ? 'border-amber-400/70 bg-amber-400/10 text-amber-300'
-              : d.isFuture
-                ? 'border-dashed border-slate-800 text-slate-600'
-                : 'border-slate-800 bg-slate-800/40 text-slate-500';
+            : d.attended
+              ? 'border-violet-500/50 bg-violet-500/15 text-violet-300 font-bold'
+              : d.isToday
+                ? 'border-amber-400/70 bg-amber-400/10 text-amber-300'
+                : d.isFuture
+                  ? 'border-dashed border-slate-800 text-slate-600'
+                  : 'border-slate-800 bg-slate-800/40 text-slate-500';
           const ring = d.isToday
             ? d.sessions.length
               ? ' ring-2 ring-emerald-400/60'
-              : ' ring-2 ring-amber-400/60'
+              : d.attended
+                ? ' ring-2 ring-violet-400/60'
+                : ' ring-2 ring-amber-400/60'
             : '';
           return (
             <div
@@ -66,9 +71,11 @@ export default function WeeklyHeatmap({ history }) {
                   ? d.sessions.length > 1
                     ? `×${d.sessions.length}`
                     : shortOf(d.sessions[0].splitDay)
-                  : d.isFuture
-                    ? ''
-                    : 'Rest'}
+                  : d.attended
+                    ? '📍 Gym'
+                    : d.isFuture
+                      ? ''
+                      : 'Rest'}
               </p>
             </div>
           );
@@ -76,7 +83,7 @@ export default function WeeklyHeatmap({ history }) {
       </div>
 
       <p className="mt-2 text-[11px] text-slate-500">
-        5-day split · 2 rest days. Green = trained · amber = today.
+        Green = workout · violet = gym attended · amber = today.
       </p>
     </section>
   );

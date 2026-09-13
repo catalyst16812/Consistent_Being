@@ -6,11 +6,13 @@ import { getGhost } from '../utils/ghost.js';
 import DayCard from './DayCard.jsx';
 
 export default function WorkoutListView() {
-  const { state, activeSplit, clearDraft } = useAppState();
+  const { state, activeSplit, clearDraft, markAttendance, unmarkAttendance } = useAppState();
   const navigate = useNavigate();
   const today = todayISO();
   const unit = state.userProfile?.unit || 'kg';
   const [expandedSession, setExpandedSession] = useState(null);
+
+  const isAttendedToday = (state.attendanceHistory || []).some((a) => a.date === today);
 
   const sortedHistory = [...state.workoutHistory].sort((a, b) =>
     b.date.localeCompare(a.date) || b.sessionId.localeCompare(a.sessionId)
@@ -84,6 +86,44 @@ export default function WorkoutListView() {
             />
           );
         })}
+      </div>
+
+      {/* Quick Gym Attendance Action */}
+      <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-3.5 transition">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-violet-500/30 bg-violet-500/15 text-base">
+              📍
+            </span>
+            <div>
+              <p className="text-xs font-black text-slate-100">
+                {isAttendedToday ? 'Gym Attendance Logged' : 'Quick Attendance'}
+              </p>
+              <p className="text-[11px] text-slate-400">
+                {isAttendedToday
+                  ? 'Presence recorded for today ✓ (+15 XP awarded)'
+                  : 'At the gym but not logging sets today? Record attendance.'}
+              </p>
+            </div>
+          </div>
+          {isAttendedToday ? (
+            <button
+              type="button"
+              onClick={() => unmarkAttendance(today)}
+              className="shrink-0 rounded-xl border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs font-bold text-slate-400 hover:text-slate-200 active:scale-95"
+            >
+              Undo
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => markAttendance(today)}
+              className="shrink-0 rounded-xl border border-violet-500/40 bg-violet-500/20 px-3.5 py-1.5 text-xs font-bold text-violet-300 hover:bg-violet-500/30 active:scale-95"
+            >
+              Mark Attended
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Past Workout History & Log Management */}

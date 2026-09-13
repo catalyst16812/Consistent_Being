@@ -35,6 +35,8 @@ export const DEFAULT_STATE = {
   cardioHistory: [],
   // Bodyweight history logs: [{ id, date: 'YYYY-MM-DD', weight: 73.5 }]
   weightHistory: [],
+  // Gym attendance records (presence without full sets): [{ id, date: 'YYYY-MM-DD', timestamp }]
+  attendanceHistory: [],
   // ['2026-W35', ...] — weeks where the full split was completed (+100 XP)
   completedSplitWeeks: [],
   // Auto-saved in-progress session (survives accidental browser closure)
@@ -80,6 +82,7 @@ function withDefaults(raw) {
     workoutHistory: Array.isArray(raw.workoutHistory) ? raw.workoutHistory : [],
     cardioHistory: Array.isArray(raw.cardioHistory) ? raw.cardioHistory : [],
     weightHistory: Array.isArray(raw.weightHistory) ? raw.weightHistory : [],
+    attendanceHistory: Array.isArray(raw.attendanceHistory) ? raw.attendanceHistory : [],
     completedSplitWeeks: Array.isArray(raw.completedSplitWeeks)
       ? raw.completedSplitWeeks
       : [],
@@ -239,6 +242,44 @@ export function AppStateProvider({ children }) {
 
   const clearDraft = useCallback(() => {
     setState((s) => ({ ...s, activeDraft: null }));
+  }, []);
+
+  /** Record gym attendance for a date (awards +15 XP if not already recorded) */
+  const markAttendance = useCallback((date = todayISO()) => {
+    setState((s) => {
+      const existing = (s.attendanceHistory || []).some((a) => a.date === date);
+      if (existing) return s;
+
+      const newEntry = {
+        id: `att-${date}-${Date.now()}`,
+        date,
+        timestamp: Date.now(),
+      };
+
+      const nextAttendance = [...(s.attendanceHistory || []), newEntry].sort((a, b) =>
+        a.date.localeCompare(b.date)
+      );
+
+      // Award +15 XP for showing up
+      const gained = 15;
+      const lines = [`+15 XP · Gym attendance recorded for ${date}!`];
+      const profile = bumpProfile(s.userProfile, gained, lines);
+      fireXp(gained, lines);
+
+      return {
+        ...s,
+        userProfile: profile,
+        attendanceHistory: nextAttendance,
+      };
+    });
+  }, [fireXp]);
+
+  /** Remove gym attendance for a date (e.g. accidental tap) */
+  const unmarkAttendance = useCallback((date = todayISO()) => {
+    setState((s) => ({
+      ...s,
+      attendanceHistory: (s.attendanceHistory || []).filter((a) => a.date !== date),
+    }));
   }, []);
 
   /** Log standalone cardio (does NOT add XP) */
@@ -416,6 +457,8 @@ export function AppStateProvider({ children }) {
     updateDraft,
     clearDraft,
     addCardioSession,
+    markAttendance,
+    unmarkAttendance,
     commitSession,
     replaceState,
     resetAll,
